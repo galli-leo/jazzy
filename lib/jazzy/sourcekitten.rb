@@ -396,6 +396,8 @@ module Jazzy
 
       annotated_decl_attrs, annotated_decl_body =
         split_decl_attributes(xml_to_text(annotated_decl_xml))
+      puts annotated_decl_xml
+      puts annotated_decl_body
 
       # From source code
       parsed_decl = doc['key.parsed_declaration']
@@ -409,6 +411,8 @@ module Jazzy
           # Strip ugly references to decl type name
           unqualify_name(annotated_decl_body, declaration)
         end
+
+      decl = annotated_decl_xml
 
       # @available attrs only in compiler 'interface' style
       available_attrs = extract_availability(doc['key.doc.declaration'] || '')
@@ -683,14 +687,18 @@ module Jazzy
                                  .gsub('\.\.\.', '[^)]*')
                                  .gsub(/<.*>/, '')
       whole_name_pat = /\A#{wildcard_expansion}\Z/
+      #puts whole_name_pat
       docs.find do |doc|
+        #puts doc.name
         whole_name_pat =~ doc.name
       end
     end
 
     # Find the first ancestor of doc whose name matches name_part.
     def self.ancestor_name_match(name_part, doc)
+      #puts doc.namespace_ancestors
       doc.namespace_ancestors.reverse_each do |ancestor|
+        #puts ancestor.name
         if match = name_match(name_part, ancestor.children)
           return match
         end
@@ -712,16 +720,17 @@ module Jazzy
     #
     # The `after_highlight` flag is used to differentiate between the two modes.
     def self.autolink_text(text, doc, root_decls, after_highlight = false)
+      #puts text
       text.autolink_block(doc.url, '[^\s]+', after_highlight) do |raw_name|
+        #puts raw_name
         parts = raw_name
                 .split(/(?<!\.)\.(?!\.)/) # dot with no neighboring dots
                 .reject(&:empty?)
-
         # First dot-separated component can match any ancestor or top-level doc
         first_part = parts.shift
         name_root = ancestor_name_match(first_part, doc) ||
                     name_match(first_part, root_decls)
-
+        #puts name_root
         # Traverse children via subsequence components, if any
         name_traversal(parts, name_root)
       end.autolink_block(doc.url, '[+-]\[\w+(?: ?\(\w+\))? [\w:]+\]',
