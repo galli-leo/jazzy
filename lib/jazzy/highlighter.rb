@@ -1,4 +1,5 @@
 require 'rouge'
+require 'jazzy/sourcekitten'
 
 module Jazzy
   # This module helps highlight code
@@ -16,7 +17,11 @@ module Jazzy
         yield "<pre class=\"highlight #{@language}\"><code>"
         tokens.each { |tok, val|
           if tok == :StartUSRLink
-            yield "<a href=\"#{val}\">"
+            if val[1] != nil
+              yield "<a href=\"#{val[1]}\" target=\"_blank\">"
+            else
+              yield "<a href=\"#{ELIDED_AUTOLINK_TOKEN}#{val[0]}#{ELIDED_AUTOLINK_TOKEN}\">"
+            end
           elsif tok == :EndUSRLink
             yield "</a>"
           else
@@ -30,10 +35,13 @@ module Jazzy
 
     class SourceKitLexer < Rouge::Lexers::Swift
       prepend :root do
-        rule /<[Tt]ype\susr\s?=\s?"(.*?)"\s?>(.*?)<\s?\/[Tt]ype\s?>/ do |m|
-          token :StartUSRLink, m[1]
-          token Keyword::Type, m[2]
-          token :EndUSRLink, m[1]
+        rule /(.)?<USRLINK\susr\s?=\s?"(.*?)"\s?(\surl\s?=\s?"(.*?)"\s?)?>(.*?)<\s?\/USRLINK\s?>/ do |m|
+          if m[1] != nil
+            token Punctuation, m[1]
+          end
+          token :StartUSRLink, [m[2], m[4]]
+          token Keyword::Type, m[5]
+          token :EndUSRLink, m[2]
         end
       end
     end

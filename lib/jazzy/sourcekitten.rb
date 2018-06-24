@@ -226,7 +226,7 @@ module Jazzy
       else
         env = ENV
       end
-      bin_path = Pathname(__FILE__) + '../../../bin/sourcekitten'
+      bin_path = "/Users/leonardogalli/Library/Developer/Xcode/DerivedData/sourcekitten-fmjwckmtvbdejgecpekjoagmwdbb/Build/Products/Debug/sourcekitten" #Pathname(__FILE__) + '../../../bin/sourcekitten'
       output, = Executable.execute_command(bin_path, arguments, true, env: env)
       output
     end
@@ -326,7 +326,7 @@ module Jazzy
         return process_undocumented_token(doc, declaration)
       end
 
-      declaration.abstract = Markdown.render(doc['key.doc.comment'] || '',
+      declaration.abstract = Markdown.render(doc['key.doc.parsed_comment'] || '',
                                              Highlighter.default_language)
       declaration.discussion = ''
       declaration.return = Markdown.rendered_returns
@@ -412,7 +412,7 @@ module Jazzy
           unqualify_name(annotated_decl_body, declaration)
         end
 
-      decl = annotated_decl_xml
+      decl = doc['key.parsed_annotated_decl']
 
       # @available attrs only in compiler 'interface' style
       available_attrs = extract_availability(doc['key.doc.declaration'] || '')
@@ -714,13 +714,42 @@ module Jazzy
       doc
     end
 
+    def self.usr_traversal(usr, doc)
+      if doc && doc.usr == usr
+        return doc
+      end
+      for child in doc.children
+        matched = usr_traversal(usr, child)
+        if matched
+          return matched
+        end
+      end
+      return nil
+    end
+
     # Links recognized top-level declarations within
     # - inlined code within docs
     # - method signatures after they've been processed by the highlighter
     #
     # The `after_highlight` flag is used to differentiate between the two modes.
     def self.autolink_text(text, doc, root_decls, after_highlight = false)
-      #puts text
+      t = text.gsub(/#{ELIDED_AUTOLINK_TOKEN}(.*?)#{ELIDED_AUTOLINK_TOKEN}/) do
+        usr = Regexp.last_match.captures[0]
+        puts Regexp.last_match
+        doc = nil
+        for decl in root_decls
+          matched = usr_traversal(usr, decl)
+          if matched
+            doc = matched
+            break
+          end
+        end
+        puts doc.url
+        "#{ELIDED_AUTOLINK_TOKEN}#{doc.url}"
+      end
+
+      return t
+
       text.autolink_block(doc.url, '[^\s]+', after_highlight) do |raw_name|
         #puts raw_name
         parts = raw_name

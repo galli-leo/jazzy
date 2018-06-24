@@ -1,6 +1,7 @@
 require 'redcarpet'
 require 'rouge'
 require 'rouge/plugins/redcarpet'
+#require 'jazzy/sourcekitten'
 
 module Jazzy
   module Markdown
@@ -101,6 +102,21 @@ module Jazzy
 
       def block_code(code, language)
         super(code, language || default_language)
+      end
+
+      def codespan(code)
+        match = code.match(/<USRLINK\susr\s?=\s?"(.*?)"\s?(\surl\s?=\s?"(.*?)"\s?)?>(.*?)<\s?\/USRLINK\s?>/)
+        if match != nil
+          url = match[3]
+          usr = match[1]
+          text = match[4]
+          if url == nil
+            url = "#{ELIDED_AUTOLINK_TOKEN}#{usr}#{ELIDED_AUTOLINK_TOKEN}"
+          end
+          "<code><a href=\"#{url}\">#{text}</a></code>"
+        else
+          super(code)
+        end
       end
 
       def rouge_formatter(lexer)
