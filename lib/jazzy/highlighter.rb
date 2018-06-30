@@ -51,11 +51,14 @@ module Jazzy
       if Config.instance.objc_mode
         'objective_c'
       else
-        SourceKitLexer.new()
+        'swift'
       end
     end
 
     def self.highlight(source, language = default_language)
+      if language == 'swift'
+        language = SourceKitLexer.new()
+      end
       source && Rouge.highlight(source, language, Formatter.new(language))
     end
   end

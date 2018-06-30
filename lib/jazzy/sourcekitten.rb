@@ -744,8 +744,12 @@ module Jazzy
             break
           end
         end
-        puts doc.url
-        "#{ELIDED_AUTOLINK_TOKEN}#{doc.url}"
+        if doc
+          puts doc.url
+          "#{ELIDED_AUTOLINK_TOKEN}#{doc.url}"
+        else
+          ""
+        end
       end
 
       return t

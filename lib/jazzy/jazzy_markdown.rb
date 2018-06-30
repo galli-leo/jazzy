@@ -115,7 +115,7 @@ module Jazzy
           end
           "<code><a href=\"#{url}\">#{text}</a></code>"
         else
-          super(code)
+          "<code>#{code}</code>"
         end
       end
 
